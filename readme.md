@@ -1,4 +1,4 @@
-# AN TRACE-BASED CACHE SIMULATOR FOR ALL CACHE TYPES
+# A TRACE-BASED CACHE SIMULATOR FOR ALL CACHE TYPES
 
 This is a project from this [website](https://occs.oberlin.edu/~ctaylor/classes/210SP13/cache.html) to help users of the site understand the functionings of the cache
 
