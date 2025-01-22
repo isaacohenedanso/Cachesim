@@ -25,9 +25,11 @@ The content of the trace file should be in this format
 with # being the marker, loadstore == 0 being a load instruction and loadstore == 1 being a store instruction, and icount being the no of previous instructions including the address itself
 
 ## SCREENSHOTS
+- Example 1;
 ![Example 1](example1.png)
+
+- Example 2;
 ![Example 2](example2.png)
-![Example 3](example3.png)
 
 ## MY PROCESS
 
