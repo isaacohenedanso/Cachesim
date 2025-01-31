@@ -4,7 +4,7 @@
 #include <math.h>
 #include <time.h>
 
-int associativity = 2;
+unsigned int associativity = 2;
 int blocksize_bytes = 32;
 int cachesize_kb = 64;
 int miss_penalty = 30;
@@ -123,7 +123,8 @@ void print_parameters()
   printf("load_misses %u\n", load_misses);
   printf("store_misses %u\n", store_misses);
   printf("load_hits %u\n", load_hits);
-  printf("store_hits %u\n", store_hits);}
+  printf("store_hits %u\n", store_hits);
+}
 void access_fields_from_address()
 {
   if (sets == 1)
@@ -171,7 +172,6 @@ int main(int argc, char *argv[])
 
   // initialize cache
   unsigned int cache[sets][associativity][4];
-
   for (unsigned int i = 0; i < sets; i++)
   {
     use_bit = associativity - 1;
@@ -187,426 +187,214 @@ int main(int argc, char *argv[])
 
   if (sets == 1)
   { // fully associative cache
-    printf("FULLY ASSOCIATIVE CACHE\n");
-
-    while (scanf("%c %d %x %d\n", &marker, &loadstore, &address, &icount) != EOF)
-    {
-      access_fields_from_address();
-      if (loadstore == 0) // load instruction
-      {
-        for (int i = 0; i < associativity; i++) // looping through the specified set
-        {
-          if ((tag == cache[set][i][0]) && (cache[set][i][1] == 1)) // load hit
-          {
-            load_hits += 1;
-            missing_block = 0;
-            for (int j = 0; j < associativity; j++)
-            {
-              if (cache[set][i][2] > cache[set][j][2])
-              {
-                cache[set][j][2] += 1;
-              }
-            }
-            cache[set][i][2] = 0;
-            break;
-          }
-          else if (tag != cache[set][i][0])
-          {
-            missing_block = 1;
-            continue;
-          }
-        }
-        if (missing_block == 1)
-        {
-          load_misses += 1;
-          for (int i = 0; i < associativity; i++) // check for empty ways
-          {
-            if (cache[set][i][1] == 0) // empty way found
-            {
-              filled_ways = 0;
-              break;
-            }
-            else
-            { // empty way not found
-              filled_ways = 1;
-              continue;
-            }
-          }
-          if (filled_ways == 0) // some ways empty
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][1] == 0) // way use_bit
-              {
-                exec_time += miss_penalty;
-                cache[set][i][0] = tag;
-                cache[set][i][1] = 1;
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                cache[set][i][3] = 0;
-                break;
-              }
-            }
-          }
-          if (filled_ways == 1) // empty way not found
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][2] == (unsigned int)(associativity - 1)) // least recently used block
-              {
-                cache[set][i][0] = tag;
-                if (cache[set][i][3] == 1)
-                {
-                  dirty_evictions += 1;
-                  exec_time += (miss_penalty + 2);
-                  cache[set][i][3] = 0;
-                }
-                else
-                {
-                  exec_time += miss_penalty;
-                  cache[set][i][3] = 0;
-                }
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      if (loadstore == 1) // store instruction
-      {
-        for (int i = 0; i < associativity; i++) // looping through the specified set
-        {
-          if ((tag == cache[set][i][0]) && (cache[set][i][1] == 1)) // store hit
-          {
-            store_hits += 1;
-            missing_block = 0;
-            for (int j = 0; j < associativity; j++)
-            {
-              if (cache[set][i][2] > cache[set][j][2])
-              {
-                cache[set][j][2] += 1;
-              }
-            }
-            cache[set][i][2] = 0;
-            cache[set][i][3] = 1;
-            break;
-          }
-          else if (tag != cache[set][i][0])
-          {
-            missing_block = 1;
-            continue;
-          }
-        }
-        if (missing_block == 1)
-        {
-          store_misses += 1;
-          for (int i = 0; i < associativity; i++) // check for empty ways
-          {
-            if (cache[set][i][1] == 0) // empty way found
-            {
-              filled_ways = 0;
-              break;
-            }
-            else
-            { // empty way not found
-              filled_ways = 1;
-              continue;
-            }
-          }
-          if (filled_ways == 0) // some ways empty
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][1] == 0) // way use_bit
-              {
-                exec_time += miss_penalty;
-                cache[set][i][0] = tag;
-                cache[set][i][1] = 1;
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                cache[set][i][3] = 1;
-                break;
-              }
-            }
-          }
-          if (filled_ways == 1) // empty way not found
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][2] == (unsigned int)(associativity - 1)) // least recently used block
-              {
-                cache[set][i][0] = tag;
-                if (cache[set][i][3] == 1)
-                {
-                  dirty_evictions += 1;
-                  exec_time += (miss_penalty + 2);
-                  cache[set][i][3] = 1;
-                }
-                else
-                {
-                  exec_time += miss_penalty;
-                  cache[set][i][3] = 1;
-                }
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // show cache configuration
-    print_cache_configuration();
-    print_parameters();
-    EXIT_SUCCESS;
+    printf("\t\tFULLY ASSOCIATIVE CACHE\n");
   }
   else
-  { // initialize cache
-    unsigned int cache[sets][associativity][4];
-    for (unsigned int i = 0; i < sets; i++)
-    {
-      use_bit = associativity - 1;
-      for (int j = 0; j < associativity; j++)
-      {
-        cache[i][j][0] = 0;       // tag
-        cache[i][j][1] = 0;       // valid
-        cache[i][j][2] = use_bit; // used
-        cache[i][j][3] = 0;       // dirty
-        --use_bit;
-      }
-    }
-
-    // read memory access trace
-    while (scanf("%c %d %x %d\n", &marker, &loadstore, &address, &icount) != EOF)
-    {
-      access_fields_from_address();
-
-      if (loadstore == 0) // load instruction
-      {
-        for (int i = 0; i < associativity; i++) // looping through the specified set
-        {
-          if ((tag == cache[set][i][0]) && (cache[set][i][1] == 1)) // load hit
-          {
-            load_hits += 1;
-            missing_block = 0;
-            for (int j = 0; j < associativity; j++)
-            {
-              if (cache[set][i][2] > cache[set][j][2])
-              {
-                cache[set][j][2] += 1;
-              }
-            }
-            cache[set][i][2] = 0;
-            break;
-          }
-          else if (tag != cache[set][i][0])
-          {
-            missing_block = 1;
-            continue;
-          }
-        }
-        if (missing_block == 1)
-        {
-          load_misses += 1;
-          for (int i = 0; i < associativity; i++) // check for empty ways
-          {
-            if (cache[set][i][1] == 0) // empty way found
-            {
-              filled_ways = 0;
-              break;
-            }
-            else
-            { // empty way not found
-              filled_ways = 1;
-              continue;
-            }
-          }
-          if (filled_ways == 0) // some ways empty
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][1] == 0) // way use_bit
-              {
-                exec_time += miss_penalty;
-                cache[set][i][0] = tag;
-                cache[set][i][1] = 1;
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                cache[set][i][3] = 0;
-                break;
-              }
-            }
-          }
-          if (filled_ways == 1) // empty way not found
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][2] == (unsigned int)(associativity - 1)) // least recently used block
-              {
-                cache[set][i][0] = tag;
-                if (cache[set][i][3] == 1)
-                {
-                  dirty_evictions += 1;
-                  exec_time += (miss_penalty + 2);
-                  cache[set][i][3] = 0;
-                }
-                else
-                {
-                  exec_time += miss_penalty;
-                  cache[set][i][3] = 0;
-                }
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      if (loadstore == 1) // store instruction
-      {
-        for (int i = 0; i < associativity; i++) // looping through the specified set
-        {
-          if ((tag == cache[set][i][0]) && (cache[set][i][1] == 1)) // store hit
-          {
-            store_hits += 1;
-            missing_block = 0;
-            for (int j = 0; j < associativity; j++)
-            {
-              if (cache[set][i][2] > cache[set][j][2])
-              {
-                cache[set][j][2] += 1;
-              }
-            }
-            cache[set][i][2] = 0;
-            cache[set][i][3] = 1;
-            break;
-          }
-          else if (tag != cache[set][i][0])
-          {
-            missing_block = 1;
-            continue;
-          }
-        }
-        if (missing_block == 1)
-        {
-          store_misses += 1;
-          for (int i = 0; i < associativity; i++) // check for empty ways
-          {
-            if (cache[set][i][1] == 0) // empty way found
-            {
-              filled_ways = 0;
-              break;
-            }
-            else
-            { // empty way not found
-              filled_ways = 1;
-              continue;
-            }
-          }
-          if (filled_ways == 0) // some ways empty
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][1] == 0) // way use_bit
-              {
-                exec_time += miss_penalty;
-                cache[set][i][0] = tag;
-                cache[set][i][1] = 1;
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                cache[set][i][3] = 1;
-                break;
-              }
-            }
-          }
-          if (filled_ways == 1) // empty way not found
-          {
-            for (int i = 0; i < associativity; i++)
-            {
-              if (cache[set][i][2] == (unsigned int)(associativity - 1)) // least recently used block
-              {
-                cache[set][i][0] = tag;
-                if (cache[set][i][3] == 1)
-                {
-                  dirty_evictions += 1;
-                  exec_time += (miss_penalty + 2);
-                  cache[set][i][3] = 1;
-                }
-                else
-                {
-                  exec_time += miss_penalty;
-                  cache[set][i][3] = 1;
-                }
-                for (int j = 0; j < associativity; j++)
-                {
-                  if (cache[set][i][2] > cache[set][j][2])
-                  {
-                    cache[set][j][2] += 1;
-                  }
-                }
-                cache[set][i][2] = 0;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-
+  {
     if (associativity == 1)
-      printf("DIRECT MAPPED CACHE\n");
+      printf("\t\tDIRECT MAPPED CACHE\n");
     else
-      printf("SET ASSOCIATIVE CACHE\n");
-    print_cache_configuration();
-    print_parameters();EXIT_SUCCESS;
+      printf("\t\t%d-WAY SET ASSOCIATIVE CACHE\n", associativity);
   }
+  printf("-----------------------------------------------\n");
+
+  // read memory access trace
+  while (scanf("%c %d %x %d\n", &marker, &loadstore, &address, &icount) != EOF)
+  {
+    access_fields_from_address();
+
+    if (loadstore == 0) // load instruction
+    {
+      for (int i = 0; i < associativity; i++) // looping through the specified set
+      {
+        if ((tag == cache[set][i][0]) && (cache[set][i][1] == 1)) // load hit
+        {
+          load_hits += 1;
+          missing_block = 0;
+          for (int j = 0; j < associativity; j++)
+          {
+            if (cache[set][i][2] > cache[set][j][2])
+            {
+              cache[set][j][2] += 1;
+            }
+          }
+          cache[set][i][2] = 0;
+          break;
+        }
+        else if (tag != cache[set][i][0])
+        {
+          missing_block = 1;
+          continue;
+        }
+      }
+      if (missing_block == 1)
+      {
+        load_misses += 1;
+        for (int i = 0; i < associativity; i++) // check for empty ways
+        {
+          if (cache[set][i][1] == 0) // empty way found
+          {
+            filled_ways = 0;
+            break;
+          }
+          else
+          { // empty way not found
+            filled_ways = 1;
+            continue;
+          }
+        }
+        if (filled_ways == 0) // some ways empty
+        {
+          for (int i = 0; i < associativity; i++)
+          {
+            if (cache[set][i][1] == 0) // way use_bit
+            {
+              exec_time += miss_penalty;
+              cache[set][i][0] = tag;
+              cache[set][i][1] = 1;
+              for (int j = 0; j < associativity; j++)
+              {
+                if (cache[set][i][2] > cache[set][j][2])
+                {
+                  cache[set][j][2] += 1;
+                }
+              }
+              cache[set][i][2] = 0;
+              cache[set][i][3] = 0;
+              break;
+            }
+          }
+        }
+        if (filled_ways == 1) // empty way not found
+        {
+          for (int i = 0; i < associativity; i++)
+          {
+            if (cache[set][i][2] == (unsigned int)(associativity - 1)) // least recently used block
+            {
+              cache[set][i][0] = tag;
+              if (cache[set][i][3] == 1)
+              {
+                dirty_evictions += 1;
+                exec_time += (miss_penalty + 2);
+                cache[set][i][3] = 0;
+              }
+              else
+              {
+                exec_time += miss_penalty;
+                cache[set][i][3] = 0;
+              }
+              for (int j = 0; j < associativity; j++)
+              {
+                if (cache[set][i][2] > cache[set][j][2])
+                {
+                  cache[set][j][2] += 1;
+                }
+              }
+              cache[set][i][2] = 0;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (loadstore == 1) // store instruction
+    {
+      for (int i = 0; i < associativity; i++) // looping through the specified set
+      {
+        if ((tag == cache[set][i][0]) && (cache[set][i][1] == 1)) // store hit
+        {
+          store_hits += 1;
+          missing_block = 0;
+          for (int j = 0; j < associativity; j++)
+          {
+            if (cache[set][i][2] > cache[set][j][2])
+            {
+              cache[set][j][2] += 1;
+            }
+          }
+          cache[set][i][2] = 0;
+          cache[set][i][3] = 1;
+          break;
+        }
+        else if (tag != cache[set][i][0])
+        {
+          missing_block = 1;
+          continue;
+        }
+      }
+      if (missing_block == 1)
+      {
+        store_misses += 1;
+        for (int i = 0; i < associativity; i++) // check for empty ways
+        {
+          if (cache[set][i][1] == 0) // empty way found
+          {
+            filled_ways = 0;
+            break;
+          }
+          else
+          { // empty way not found
+            filled_ways = 1;
+            continue;
+          }
+        }
+        if (filled_ways == 0) // some ways empty
+        {
+          for (int i = 0; i < associativity; i++)
+          {
+            if (cache[set][i][1] == 0) // way use_bit
+            {
+              exec_time += miss_penalty;
+              cache[set][i][0] = tag;
+              cache[set][i][1] = 1;
+              for (int j = 0; j < associativity; j++)
+              {
+                if (cache[set][i][2] > cache[set][j][2])
+                {
+                  cache[set][j][2] += 1;
+                }
+              }
+              cache[set][i][2] = 0;
+              cache[set][i][3] = 1;
+              break;
+            }
+          }
+        }
+        if (filled_ways == 1) // empty way not found
+        {
+          for (int i = 0; i < associativity; i++)
+          {
+            if (cache[set][i][2] == (unsigned int)(associativity - 1)) // least recently used block
+            {
+              cache[set][i][0] = tag;
+              if (cache[set][i][3] == 1)
+              {
+                dirty_evictions += 1;
+                exec_time += (miss_penalty + 2);
+                cache[set][i][3] = 1;
+              }
+              else
+              {
+                exec_time += miss_penalty;
+                cache[set][i][3] = 1;
+              }
+              for (int j = 0; j < associativity; j++)
+              {
+                if (cache[set][i][2] > cache[set][j][2])
+                {
+                  cache[set][j][2] += 1;
+                }
+              }
+              cache[set][i][2] = 0;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  print_cache_configuration();
+  print_parameters();
+  EXIT_SUCCESS;
 }

@@ -26,14 +26,14 @@ with # being the marker, loadstore == 0 being a load instruction and loadstore =
 
 ## SCREENSHOTS
 - Example 1;
-![Example 1](example1.png)
+![Example 1](screenshots/example1.png)
 
 - Example 2;
-![Example 2](example2.png)
+![Example 2](screenshots/example2.png)
 
 ## MY PROCESS
 
-Brainstorming before creating the project lead to me comming up with three main Scenarios for both load and store instructions
+Brainstorming before creating the project led to me comming up with three main Scenarios for both load and store instructions
 1. When the tags from the address match the tags in a way and the valid bit of that way is set (LOAD HIT OCCURS)
 
 2. When the tag from the address does not match the tag in any way of a set, and all the ways are filled with valid data (LOAD MISS, DIRTY EVICTIONS HAPPEN)
